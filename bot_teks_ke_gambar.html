@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Bot Teks ke Gambar</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" />
+    <style>
+        /* Reset */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Merriweather', serif;
+            background-color: #f0f0f0; /* Latar belakang abu-abu muda */
+            color: #000000; /* Teks hitam untuk kontras yang baik */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px 16px 48px;
+            user-select: none;
+        }
+        header {
+            font-weight: 700;
+            font-size: 2.6rem;
+            letter-spacing: 2px;
+            margin-bottom: 32px;
+            color: #000000; /* Teks hitam */
+            text-align: center;
+        }
+        main {
+            background: #ffffff; /* Latar belakang putih untuk area konten */
+            border-radius: 24px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            max-width: 700px;
+            width: 100%;
+            padding: 36px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+            box-sizing: border-box;
+        }
+        label {
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #000000; /* Teks hitam */
+            margin-bottom: 8px;
+        }
+        textarea {
+            width: 100%;
+            resize: vertical;
+            font-size: 1.3rem;
+            font-family: inherit;
+            border-radius: 16px;
+            border: 1.5px solid #cccccc; /* Border abu-abu */
+            padding: 14px 18px;
+            background: #ffffff; /* Latar belakang putih */
+            color: #000000; /* Teks hitam */
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+        textarea:focus {
+            border-color: #007bff; /* Warna border saat fokus */
+        }
+        select, input[type=color], input[type=range] {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #000000; /* Teks hitam */
+            font-family: inherit;
+            background: #ffffff; /* Latar belakang putih */
+            border-radius: 14px;
+            border: 1.5px solid #cccccc; /* Border abu-abu */
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+            margin-top: 4px;
+        }
+        select:hover, select:focus, input[type=color]:hover, input[type=range]:hover {
+            border-color: #007bff; /* Warna border saat hover */
+        }
+        button {
+            background: #007bff; /* Warna tombol biru */
+            color: #ffffff; /* Teks putih */
+            border: none;
+            border-radius: 20px;
+            padding: 14px 0;
+            font-size: 1.2rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            transition: background 0.3s ease, transform 0.25s ease;
+            user-select: none;
+            min-width: 160px;
+            margin: 0 10px; /* Jarak antar tombol */
+        }
+        button:hover, button:focus {
+            background: #0056b3; /* Warna tombol saat hover */
+            transform: scale(1.05);
+            outline: none;
+        }
+        .preview-container {
+            border-radius: 28px;
+            box-shadow: 0 12px 70px 22px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            user-select: none;
+        }
+        #canvasPreview {
+            max-width: 100%;
+            border-radius: 28px;
+            box-shadow: 0 0 42px 16px rgba(0, 0, 0, 0.1);
+            image-rendering: pixelated;
+            background: #ffffff; /* Latar belakang putih untuk kanvas */
+        }
+        .button-container {
+            display: flex;
+            justify-content: center; /* Pusatkan tombol */
+            gap: 20px; /* Jarak antar tombol */
+        }
+
+        /* Media Queries untuk Responsif */
+        @media (max-width: 768px) {
+            header {
+                font-size: 2rem; /* Ukuran font header lebih kecil di perangkat kecil */
+            }
+            main {
+                padding: 24px 16px; /* Padding lebih kecil di perangkat kecil */
+            }
+            button {
+                font-size: 1rem; /* Ukuran font tombol lebih kecil di perangkat kecil */
+            }
+            textarea {
+                font-size: 1rem; /* Ukuran font textarea lebih kecil di perangkat kecil */
+            }
+            select {
+                font-size: 1rem; /* Ukuran font select lebih kecil di perangkat kecil */
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>Bot Teks ke Gambar</header>
+    <main>
+        <div>
+            <label for="textInput">Masukkan Teks</label>
+            <textarea id="textInput" placeholder="Tulis teks di sini..." aria-label="Masukkan teks"></textarea>
+        </div>
+
+        <div>
+            <label for="alignmentSelect">Pilih Perataan Teks</label>
+            <select id="alignmentSelect" aria-label="Pilih perataan teks">
+                <option value="left" selected>Rata Kiri</option>
+                <option value="center">Rata Tengah</option>
+                <option value="right">Rata Kanan</option>
+                <option value="justify">Rata Sama</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="bookSizeSelect">Pilih Ukuran Buku</label>
+            <select id="bookSizeSelect" aria-label="Pilih ukuran buku">
+                <option value="A0">A0 (84,1 x 118,9 cm)</option>
+                <option value="A1">A1 (59,4 x 84,1 cm)</option>
+                <option value="A2">A2 (42,0 x 59,4 cm)</option>
+                <option value="A3">A3 (29,7 x 42,0 cm)</option>
+                <option value="A4" selected>A4 (21,0 x 29,7 cm)</option>
+                <option value="A5">A5 (14,8 x 21,0 cm)</option>
+                <option value="A6">A6 (10,5 x 14,8 cm)</option>
+                <option value="A7">A7 (7,4 x 10,5 cm)</option>
+                <option value="A8">A8 (5,2 x 7,4 cm)</option>
+                <option value="A9">A9 (3,7 x 5,2 cm)</option>
+                <option value="A10">A10 (2,6 x 3,7 cm)</option>
+                <option value="B4">B4 (25,0 x 35,3 cm)</option>
+                <option value="B5">B5 (17,6 x 25,0 cm)</option>
+                <option value="B6">B6 (12,5 x 17,6 cm)</option>
+                <option value="C4">C4 (22,9 x 32,4 cm)</option>
+                <option value="F4">F4 (21,5 x 33 cm)</option>
+                <option value="Letter">Letter (21,59 x 27,94 cm)</option>
+                <option value="3R">3R (8,9 x 12,7 cm)</option>
+                <option value="4R">4R (10,2 x 15,2 cm)</option>
+                <option value="5R">5R (12,7 x 17,8 cm)</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="paperTypeSelect">Pilih Jenis Kertas</label>
+            <select id="paperTypeSelect" aria-label="Pilih jenis kertas">
+                <option value="default" selected>Kertas Putih</option>
+                <option value="cream">Kertas Krim</option>
+                <option value="recycled">Kertas Daur Ulang</option>
+                <option value="glossy">Kertas Glossy</option>
+                <option value="matte">Kertas Matte</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="paperModelSelect">Pilih Model Kertas</label>
+            <select id="paperModelSelect" aria-label="Pilih model kertas">
+                <option value="hvs" selected>HVS</option>
+                <option value="artPaper">Art Paper</option>
+                <option value="artCarton">Art Carton</option>
+                <option value="ivory">Ivory</option>
+                <option value="duplex">Duplex</option>
+                <option value="kraft">Kraft</option>
+            </select>
+        </div>
+
+        <div class="preview-container">
+            <canvas id="canvasPreview" width="700" height="400" role="img" aria-label="Pratinjau gambar teks"></canvas>
+        </div>
+
+        <div class="button-container">
+            <button id="btnDownload" aria-label="Unduh gambar teks">Unduh Gambar</button>
+            <button id="btnWhatsApp" aria-label="Bagikan teks ke WhatsApp">Bagikan ke WhatsApp</button>
+        </div>
+    </main>
+
+    <script>
+        () => {
+            const canvas = document.getElementById('canvasPreview');
+            const ctx = canvas.getContext('2d');
+            const textInput = document.getElementById('textInput');
+            const alignmentSelect = document.getElementById('alignmentSelect');
+            const bookSizeSelect = document.getElementById('bookSizeSelect');
+            const paperTypeSelect = document.getElementById('paperTypeSelect');
+            const paperModelSelect = document.getElementById('paperModelSelect');
+            const btnDownload = document.getElementById('btnDownload');
+            const btnWhatsApp = document.getElementById('btnWhatsApp');
+
+            // Faktor skala untuk meningkatkan resolusi gambar
+            const scaleFactor = 2;
+        }
+
+            // Fungsi untuk menggambar di kanvas
+            function drawCanvas() {
+                const text = textInput.value;
+
+                // Mengatur latar belakang kanvas berdasarkan jenis kertas
+                ctx.fillStyle = getPaperColor(paperTypeSelect.value);
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Menggambar garis kertas
+                drawPaperLines();
+
+                // Mengatur teks
+                ctx.font = '24px Arial'; // Ukuran dan jenis font
+                ctx.fillStyle = '#000000'; // Warna teks
+                ctx.textAlign = alignmentSelect.value; // Menggunakan perataan yang dipilih
+                ctx.textBaseline = 'top';
+
+                // Menggambar teks
+                const x = alignmentSelect.value === 'center' ? canvas.width / 2 : 
+                          alignmentSelect.value === 'right' ? canvas.width - 20 : 20;
+
+                // Memisahkan teks berdasarkan baris baru
+                const lines = text.split('\n');
+                let y = 20; // Posisi Y awal untuk menggambar teks
+
+                lines.forEach(line => {
+                    wrapText(ctx, line, x, y, canvas.width - 40, 30);
+                    y += 30; // Menambah posisi Y untuk baris berikutnya
+                });
+            }
+
+            // Fungsi untuk mendapatkan warna latar belakang berdasarkan jenis kertas
+            function getPaperColor(paperType) {
+                switch (paperType) {
+                    case 'cream':
+                        return '#f5f5dc'; // Kertas krim
+                    case 'recycled':
+                        return '#d9d9d9'; // Kertas daur ulang
+                    case 'glossy':
+                        return '#ffffff'; // Kertas glossy
+                    case 'matte':
+                        return '#f0f0f0'; // Kertas matte
+                    default:
+                        return '#ffffff'; // Kertas putih
+                }
+            }
+
+            // Fungsi untuk menggambar garis kertas
+            function drawPaperLines() {
+                ctx.strokeStyle = '#cccccc'; // Warna garis
+                ctx.lineWidth = 1;
+
+                const lineSpacing = 30; // Jarak antar garis
+                const startY = 60; // Posisi Y awal untuk garis
+
+                for (let i = startY; i < canvas.height; i += lineSpacing) {
+                    ctx.beginPath();
+                    ctx.moveTo(20, i);
+                    ctx.lineTo(canvas.width - 20, i);
+                    ctx.stroke();
+                }
+            }
+
+            // Fungsi untuk membungkus teks
+            function wrapText(context, text, x, y, maxWidth, lineHeight) {
+                const words = text.split(' ');
+                let line = '';
+
+                for (let n = 0; n < words.length; n++) {
+                    const testLine = line + words[n] + ' ';
+                    const metrics = context.measureText(testLine);
+                    const testWidth = metrics.width;
+
+                    if (testWidth > maxWidth && n > 0) {
+                        context.fillText(line, x, y);
+                        line = words[n] + ' ';
+                        y += lineHeight;
+                    } else {
+                        line = testLine;
+                    }
+                }
+                context.fillText(line, x, y);
+            }
+
+            // Event listeners
+            textInput.addEventListener('input', drawCanvas);
+            alignmentSelect.addEventListener('change', drawCanvas); // Gambar ulang kanvas saat perataan diubah
+            bookSizeSelect.addEventListener('change', () => {
+                const selectedSize = bookSizeSelect.value;
+                switch (selectedSize) {
+                    case 'A0':
+                        canvas.width = 841;
+                        canvas.height = 1189; // Ukuran A0
+                        break;
+                    case 'A1':
+                        canvas.width = 594;
+                        canvas.height = 841; // Ukuran A1
+                        break;
+                    case 'A2':
+                        canvas.width = 420;
+                        canvas.height = 594; // Ukuran A2
+                        break;
+                    case 'A3':
+                        canvas.width = 297;
+                        canvas.height = 420; // Ukuran A3
+                        break;
+                    case 'A4':
+                        canvas.width = 210;
+                        canvas.height = 297; // Ukuran A4
+                        break;
+                    case 'A5':
+                        canvas.width = 148;
+                        canvas.height = 210; // Ukuran A5
+                        break;
+                    case 'A6':
+                        canvas.width = 105;
+                        canvas.height = 148; // Ukuran A6
+                        break;
+                    case 'A7':
+                        canvas.width = 74;
+                        canvas.height = 105; // Ukuran A7
+                        break;
+                    case 'A8':
+                        canvas.width = 52;
+                        canvas.height = 74; // Ukuran A8
+                        break;
+                    case 'A9':
+                        canvas.width = 37;
+                        canvas.height = 52; // Ukuran A9
+                        break;
+                    case 'A10':
+                        canvas.width = 26;
+                        canvas.height = 37; // Ukuran A10
+                        break;
+                    case 'B4':
+                        canvas.width = 250;
+                        canvas.height = 353; // Ukuran B4
+                        break;
+                    case 'B5':
+                        canvas.width = 176;
+                        canvas.height = 250; // Ukuran B5
+                        break;
+                    case 'B6':
+                        canvas.width = 125;
+                        canvas.height = 176; // Ukuran B6
+                        break;
+                    case 'C4':
+                        canvas.width = 229;
+                        canvas.height = 324; // Ukuran C4
+                        break;
+                    case 'F4':
+                        canvas.width = 215;
+                        canvas.height = 330; // Ukuran F4
+                        break;
+                    case 'Letter':
+                        canvas.width = 216; // Ukuran Letter
+                        canvas.height = 279;
+                        break;
+                    case '3R':
+                        canvas.width = 89;
+                        canvas.height = 127; // Ukuran 3R
+                        break;
+                    case '4R':
+                        canvas.width = 102;
+                        canvas.height = 152; // Ukuran 4R
+                        break;
+                    case '5R':
+                        canvas.width = 127;
+                        canvas.height = 178; // Ukuran 5R
+                        break;
+                }
+                drawCanvas(); // Gambar ulang kanvas setelah ukuran diubah
+            });
+            paperTypeSelect.addEventListener('change', drawCanvas); // Gambar ulang kanvas saat jenis kertas diubah
+            paperModelSelect.addEventListener('change', drawCanvas); // Gambar ulang kanvas saat model kertas diubah
+
+            // Fungsi untuk mengunduh gambar dengan kualitas tinggi
+            btnDownload.addEventListener('click'), () => {
+                const highResCanvas = document.createElement('canvas');
+                const highResCtx = highResCanvas.getContext('2d');
+            }
+
+                // Mengatur ukuran kanvas untuk HD
+                highResCanvas;
+            
